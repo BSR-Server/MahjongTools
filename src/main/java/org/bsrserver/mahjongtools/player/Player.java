@@ -34,7 +34,7 @@ public class Player {
             String meldMahjongName = Utils.getItemFrameNameByPos(serverWorld, meldMahjongLocation.getX(i), 32, meldMahjongLocation.getZ(i));
             result[meldMahjongLocation.get2DArrayX(i)][meldMahjongLocation.get2DArrayY(i)] = meldMahjongName;
         }
-        return result;
+        return meldMahjongLocation.getRotatedLocation(result);
     }
 
     public boolean[] getMeldArrows() {
