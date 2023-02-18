@@ -20,13 +20,13 @@ public class CalculateHandler implements Command<ServerCommandSource> {
     private Player getPlayer(String location) {
         if (location.equals("E") || location.equals("S") || location.equals("W") || location.equals("N")) {
             if (location.equals(Utils.getItemFrameNameByPos(overworld, -956, 32, -2108))) {
-                return new Player(overworld, 1);
+                return new Player(overworld, location, 1);
             } else if (location.equals(Utils.getItemFrameNameByPos(overworld, -956, 32, -2117))) {
-                return new Player(overworld, 2);
+                return new Player(overworld, location, 2);
             } else if (location.equals(Utils.getItemFrameNameByPos(overworld, -965, 32, -2117))) {
-                return new Player(overworld, 3);
+                return new Player(overworld, location, 3);
             } else if (location.equals(Utils.getItemFrameNameByPos(overworld, -965, 32, -2108))) {
-                return new Player(overworld, 4);
+                return new Player(overworld, location, 4);
             }
         }
         throw new IllegalPlayerException();

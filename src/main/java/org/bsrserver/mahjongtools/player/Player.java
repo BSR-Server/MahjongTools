@@ -9,14 +9,16 @@ import java.util.Objects;
 
 public class Player {
     private final ServerWorld serverWorld;
+    private final String seatWind;
     private final MainMahjongLocation mainMahjongLocation;
     private final MeldMahjongLocation meldMahjongLocation;
     private final MeldArrowLocation meldArrowLocation;
     private final DoraIndicatorLocation doraIndicatorLocation;
     private final HiddenDoraIndicatorLocation hiddenDoraIndicatorLocation;
 
-    public Player(ServerWorld serverWorld, int location) {
+    public Player(ServerWorld serverWorld, String seatWind, int location) {
         this.serverWorld = serverWorld;
+        this.seatWind = seatWind;
         this.mainMahjongLocation = new MainMahjongLocation(location);
         this.meldMahjongLocation = new MeldMahjongLocation(location);
         this.meldArrowLocation = new MeldArrowLocation(location);
@@ -68,5 +70,20 @@ public class Player {
 
     public String getPrevailingWind() {
         return Utils.getItemFrameNameByPos(serverWorld, -958, 32, -2115);
+    }
+
+    public String getSeatWind() {
+        switch (seatWind) {
+            case "E":
+                return "z1";
+            case "S":
+                return "z2";
+            case "W":
+                return "z3";
+            case "N":
+                return "z4";
+            default:
+                return null;
+        }
     }
 }
