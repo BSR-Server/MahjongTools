@@ -65,4 +65,8 @@ public class Player {
         }
         return result;
     }
+
+    public String getPrevailingWind() {
+        return Utils.getItemFrameNameByPos(serverWorld, -958, 32, -2115);
+    }
 }
