@@ -12,12 +12,16 @@ public class Player {
     private final MainMahjongLocation mainMahjongLocation;
     private final MeldMahjongLocation meldMahjongLocation;
     private final MeldArrowLocation meldArrowLocation;
+    private final DoraIndicatorLocation doraIndicatorLocation;
+    private final HiddenDoraIndicatorLocation hiddenDoraIndicatorLocation;
 
     public Player(ServerWorld serverWorld, int location) {
         this.serverWorld = serverWorld;
         this.mainMahjongLocation = new MainMahjongLocation(location);
         this.meldMahjongLocation = new MeldMahjongLocation(location);
         this.meldArrowLocation = new MeldArrowLocation(location);
+        this.doraIndicatorLocation = new DoraIndicatorLocation();
+        this.hiddenDoraIndicatorLocation = new HiddenDoraIndicatorLocation();
     }
 
     public String[] getMainMahjongNames() {
@@ -42,6 +46,22 @@ public class Player {
         for (int i = 0; i < 4; i++) {
             ItemFrameEntity itemFrameEntity = Utils.getItemFrameEntity(serverWorld, meldArrowLocation.getX(i), 32, meldArrowLocation.getZ(i));
             result[i] = meldArrowLocation.getSelfRotation() == Objects.requireNonNull(itemFrameEntity).getRotation();
+        }
+        return result;
+    }
+
+    public String[] getDoraIndicators() {
+        String[] result = new String[5];
+        for (int i = 0; i < 5; i++) {
+            result[i] = Utils.getItemFrameNameByPos(serverWorld, doraIndicatorLocation.getX(i), 32, doraIndicatorLocation.getZ(i));
+        }
+        return result;
+    }
+
+    public String[] getHiddenDoraIndicators() {
+        String[] result = new String[5];
+        for (int i = 0; i < 5; i++) {
+            result[i] = Utils.getItemFrameNameByPos(serverWorld, hiddenDoraIndicatorLocation.getX(i), 32, hiddenDoraIndicatorLocation.getZ(i));
         }
         return result;
     }
