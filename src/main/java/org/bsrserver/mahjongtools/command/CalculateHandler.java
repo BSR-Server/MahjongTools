@@ -15,6 +15,8 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import net.minecraft.world.World;
 import org.bsrserver.mahjongtools.Utils;
+import org.bsrserver.mahjongtools.algorithm.Tile;
+import org.bsrserver.mahjongtools.algorithm.Mahjong;
 import org.bsrserver.mahjongtools.player.Player;
 import org.bsrserver.mahjongtools.exception.PlayerNotPlayingException;
 import org.bsrserver.mahjongtools.exception.IllegalPlayerException;
@@ -76,16 +78,38 @@ public class CalculateHandler implements Command<ServerCommandSource> {
             String playerArgument = context.getArgument("player", String.class);
             Player player = getPlayer(playerArgument);
 
-            // log
-            String mainMahjongNames = Arrays.toString(player.getMainMahjongNames());
-            String meldMahjongNames = Arrays.deepToString(player.getMeldMahjongNames());
-            String meldArrows = Arrays.toString(player.getMeldArrows());
-            LogManager.getLogger().info("Player " + playerArgument + " has main mahjong names: " + mainMahjongNames);
-            LogManager.getLogger().info("Player " + playerArgument + " has meld mahjong names: " + meldMahjongNames);
-            LogManager.getLogger().info("Player " + playerArgument + " has meld arrows: " + meldArrows);
+            // get data
+            String[] mainMahjongNames = player.getMainMahjongNames();
+            String[][] meldMahjongNames = player.getMeldMahjongNames();
+            boolean[] meldArrows = player.getMeldArrows();
+            String[] doraIndicators = player.getDoraIndicators();
+            String[] hiddenDoreIndicators = player.getHiddenDoraIndicators();
+            String prevailingWind = player.getPrevailingWind();
+            String seatWind = player.getSeatWind();
+            LogManager.getLogger().info("Player " + playerArgument + " has main mahjong names: " + Arrays.toString(mainMahjongNames));
+            LogManager.getLogger().info("Player " + playerArgument + " has meld mahjong names: " + Arrays.deepToString(meldMahjongNames));
+            LogManager.getLogger().info("Player " + playerArgument + " has meld arrows: " + Arrays.toString(meldArrows));
+            LogManager.getLogger().info("Player " + playerArgument + " has dora indicators: " + Arrays.toString(doraIndicators));
+            LogManager.getLogger().info("Player " + playerArgument + " has hidden dora indicators: " + Arrays.toString(hiddenDoreIndicators));
+            LogManager.getLogger().info("Player " + playerArgument + " has prevailing wind: " + prevailingWind);
+            LogManager.getLogger().info("Player " + playerArgument + " has seat wind: " + seatWind);
+
+            // new Mahjong instance
+            Mahjong mahjong = new Mahjong(
+                    Arrays.copyOfRange(mainMahjongNames, 0, 13),
+                    mainMahjongNames[13],
+                    meldMahjongNames,
+                    meldArrows,
+                    doraIndicators,
+                    hiddenDoreIndicators
+            );
+            mahjong.setPrevailingWind(new Tile(prevailingWind));
+            mahjong.setSeatWind(new Tile(player.getSeatWind()));
+            mahjong.tryToSplit();
+            mahjong.getMaxScore();
 
             // reply
-            reply(context.getSource().getMinecraftServer().getPlayerManager().getPlayerList(), new LiteralText(""));
+            reply(context.getSource().getMinecraftServer().getPlayerManager().getPlayerList(), new LiteralText(mahjong.toString()));
         } catch (IllegalPlayerException exception) {
             context.getSource().sendError(new LiteralText("Illegal Player!"));
         } catch (PlayerNotPlayingException exception) {
