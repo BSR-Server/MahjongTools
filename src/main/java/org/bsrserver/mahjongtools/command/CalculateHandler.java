@@ -1,7 +1,10 @@
 package org.bsrserver.mahjongtools.command;
 
+import java.util.List;
 import java.util.Arrays;
 
+import net.minecraft.entity.Entity;
+import net.minecraft.text.MutableText;
 import org.apache.logging.log4j.LogManager;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
@@ -10,8 +13,10 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.command.ServerCommandSource;
 
+import net.minecraft.world.World;
 import org.bsrserver.mahjongtools.Utils;
 import org.bsrserver.mahjongtools.player.Player;
+import org.bsrserver.mahjongtools.exception.PlayerNotPlayingException;
 import org.bsrserver.mahjongtools.exception.IllegalPlayerException;
 
 public class CalculateHandler implements Command<ServerCommandSource> {
@@ -32,9 +37,38 @@ public class CalculateHandler implements Command<ServerCommandSource> {
         throw new IllegalPlayerException();
     }
 
+    private boolean isPlayerInRange(ServerPlayerEntity serverPlayerEntity) {
+        boolean isOverWorld = serverPlayerEntity.getEntityWorld().getRegistryKey() == World.OVERWORLD;
+        boolean isInXRange = -979 < serverPlayerEntity.getPos().getX() && serverPlayerEntity.getPos().getX() < -942;
+        boolean isInYRange = 31 < serverPlayerEntity.getPos().getY() && serverPlayerEntity.getPos().getY() < 37;
+        boolean isInZRange = -2131 < serverPlayerEntity.getPos().getZ() && serverPlayerEntity.getPos().getZ() < -2094;
+        return isOverWorld && isInXRange && isInYRange && isInZRange;
+    }
+
+    private void reply(List<ServerPlayerEntity> serverPlayerEntities, MutableText message) {
+        for (ServerPlayerEntity serverPlayerEntity : serverPlayerEntities) {
+            if (isPlayerInRange(serverPlayerEntity)) {
+                serverPlayerEntity.sendMessage(message, false);
+            }
+        }
+    }
+
     @Override
     public int run(CommandContext<ServerCommandSource> context) {
         try {
+            // check player location
+            Entity entity = context.getSource().getEntity();
+            boolean shouldThrowException = true;
+            if (entity instanceof ServerPlayerEntity) {
+                ServerPlayerEntity serverPlayerEntity = (ServerPlayerEntity) entity;
+                if (isPlayerInRange(serverPlayerEntity)) {
+                    shouldThrowException = false;
+                }
+            }
+            if (shouldThrowException) {
+                throw new PlayerNotPlayingException();
+            }
+
             // save overworld
             overworld = context.getSource().getMinecraftServer().getOverworld();
 
@@ -51,15 +85,17 @@ public class CalculateHandler implements Command<ServerCommandSource> {
             LogManager.getLogger().info("Player " + playerArgument + " has meld arrows: " + meldArrows);
 
             // reply
-            for (ServerPlayerEntity serverPlayerEntity : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                serverPlayerEntity.sendMessage(new LiteralText(mainMahjongNames), false);
-                serverPlayerEntity.sendMessage(new LiteralText(meldMahjongNames), false);
-                serverPlayerEntity.sendMessage(new LiteralText(meldArrows), false);
-            }
-        } catch (IllegalPlayerException ignored) {
+            reply(context.getSource().getMinecraftServer().getPlayerManager().getPlayerList(), new LiteralText(""));
+        } catch (IllegalPlayerException exception) {
             context.getSource().sendError(new LiteralText("Illegal Player!"));
+        } catch (PlayerNotPlayingException exception) {
+            context.getSource().sendError(new LiteralText("You are not playing!"));
         } catch (Exception e) {
             e.printStackTrace();
+            context.getSource().sendError(new LiteralText(e.toString()));
+            for (StackTraceElement element : e.getStackTrace()) {
+                context.getSource().sendError(new LiteralText(element.toString()));
+            }
         }
         return Command.SINGLE_SUCCESS;
     }
