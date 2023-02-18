@@ -27,6 +27,6 @@ public class Yakuman {
     }
     
     public String toString(){
-        return yakuman;
+        return yakuman + "\n";
     }
 }

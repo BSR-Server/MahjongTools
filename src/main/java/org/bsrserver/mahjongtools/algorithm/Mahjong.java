@@ -34,48 +34,12 @@ public class Mahjong {
     private ArrayList<Hand> waysToSplit;
     private Hand maxScoreHand;
 
-    public Mahjong(String[] hand, String winningTile, String[][] openMelds, boolean[] meldsFromSelf) {
-        this.winningTile = new Tile(Tile.renameTile(winningTile));
-        Arrays.sort(hand);
-        origHand = new ArrayList<Tile>();
-        for (String t: hand){
-            this.origHand.add(new Tile(t));
-        }
-        this.openMelds = new ArrayList<Meld>();
-        closedHand = true;
-        for (int i = 0; i < openMelds.length; i++) {
-            String[] m = openMelds[i];
-            Meld meld = new Meld(m);
-            int type = 0;
-            if (meld.isSequence()){
-                type = Meld.OPEN_SEQUENCE;
-            }
-            else if (meld.isTriplet()){
-                type = Meld.OPEN_TRIPLET;
-            }
-            else if (meld.isQuad()){
-                if (meldsFromSelf[i]){
-                    type = Meld.CLOSED_QUAD;
-                }
-                else {
-                    type = Meld.OPEN_QUAD;
-                }
-            }
-            if (type > 20 && closedHand){
-                closedHand = false;
-            }
-            meld.setType(type);
-            this.openMelds.add(meld);
-        }
-        System.out.println(this);
-    }
-
     public Mahjong(String[] hand, String winningTile, String[][] openMelds, boolean[] meldsFromSelf, String[] doraIndicators, String[] hiddenDoraIndicators) {
         this.winningTile = new Tile(Tile.renameTile(winningTile));
         Arrays.sort(hand);
         origHand = new ArrayList<Tile>();
         redTileCount += CountRedTiles(hand);
-        renameTiles(hand);
+        hand = renameTiles(hand);
         for (String t: hand){
             origHand.add(new Tile(t));
         }
@@ -84,35 +48,36 @@ public class Mahjong {
         for (int i = 0; i < openMelds.length; i++) {
             String[] m = openMelds[i];
             redTileCount += CountRedTiles(m);
-            renameTiles(m);
-            Meld meld = new Meld(m);
-            int type = 0;
-            if (meld.isSequence()){
-                type = Meld.OPEN_SEQUENCE;
-            }
-            else if (meld.isTriplet()){
-                type = Meld.OPEN_TRIPLET;
-            }
-            else if (meld.isQuad()){
-                if (meldsFromSelf[i]){
-                    type = Meld.CLOSED_QUAD;
+            m = renameTiles(m);
+            if (m.length > 0) {
+                Meld meld = new Meld(m);
+                int type = 0;
+                if (meld.isSequence()) {
+                    type = Meld.OPEN_SEQUENCE;
+                } else if (meld.isTriplet()) {
+                    type = Meld.OPEN_TRIPLET;
+                } else if (meld.isQuad()) {
+                    if (meldsFromSelf[i]) {
+                        type = Meld.CLOSED_QUAD;
+                    } else {
+                        type = Meld.OPEN_QUAD;
+                    }
                 }
-                else {
-                    type = Meld.OPEN_QUAD;
+                if (type > 20 && closedHand) {
+                    closedHand = false;
                 }
+                meld.setType(type);
+                this.openMelds.add(meld);
             }
-            if (type > 20 && closedHand){
-                closedHand = false;
-            }
-            meld.setType(type);
-            this.openMelds.add(meld);
         }
         this.doraIndicators = new ArrayList<Tile>();
+        doraIndicators = renameTiles(doraIndicators);
         for (String t: doraIndicators){
             this.doraIndicators.add(new Tile(t));
         }
         this.doras = getDoras(this.doraIndicators);
         this.hiddenDoraIndicators = new ArrayList<Tile>();
+        hiddenDoraIndicators = renameTiles(hiddenDoraIndicators);
         for (String t: hiddenDoraIndicators){
             this.hiddenDoraIndicators.add(new Tile(t));
         }
@@ -247,35 +212,6 @@ public class Mahjong {
     }
 
 
-    /**
-     * 统计数组中红宝牌的数量<br>
-     * 在地图物品的命名中标号为4的m5, p5, s5为红宝牌
-     * @param tiles 读入的地图画物品的命名的数组
-     * @return 红宝牌的数量
-     */
-    private int CountRedTiles(String[] tiles) {
-        int count = 0;
-        for (int i = 0; i < tiles.length; i++) {
-            String tile = tiles[i];
-            if (tile.matches("[mps]5_.4")) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    /**
-     * 将读入的地图画物品的命名转换为表示牌的字符串，是否为红宝牌的信息将会丢失<br>
-     * 如："m2_a1" -> "m2", "p5_b4" -> "p5"
-     * @param tiles 读入的地图画物品的命名的数组
-     * @return
-     */
-    private void renameTiles(String[] tiles){
-        for (int i = 0; i < tiles.length; i++) {
-            String tile = tiles[i];
-            tiles[i] = Tile.renameTile(tile);
-        }
-    }
 
     /**
      * 将（里）宝牌指示牌转化为对应的宝牌 <br>
@@ -318,8 +254,8 @@ public class Mahjong {
                 }
             }
         }
-//        print(waysToSplit);
-//        System.out.println();
+        print(waysToSplit);
+        System.out.println();
         for (Hand h: waysToSplit){
             h.setMahjong(this);
         }
@@ -348,9 +284,55 @@ public class Mahjong {
 
     @Override
     public String toString(){
-        return getTiles() + "\n\n" + maxScoreHand;
+//        if (maxScoreHand != null) {
+            return getTiles() + "\n\n" + maxScoreHand;
+//        }
+//        else {
+//            return "你这是诈胡啊！";
+//        }
+    }
 
 
+    /**
+     * 统计数组中红宝牌的数量<br>
+     * 在地图物品的命名中标号为4的m5, p5, s5为红宝牌
+     * @param tiles 读入的地图画物品的命名的数组
+     * @return 红宝牌的数量
+     */
+    private static int CountRedTiles(String[] tiles) {
+        int count = 0;
+        for (int i = 0; i < tiles.length; i++) {
+            String tile = tiles[i];
+            if (tile.matches("[mps]5_.4")) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 将读入的地图画物品的命名转换为表示牌的字符串<br>
+     * 如："m2_a1" -> "m2", "p5_b4" -> "p0"
+     * @param ts 读入的地图画物品的命名的数组
+     * @return
+     */
+    private static String[] renameTiles(String[] ts){
+        int count = 0;
+        for (String t: ts){
+            if (!t.equals("")){
+                count++;
+            }
+        }
+        String[] tiles = new String[count];
+
+        for (int i = 0, j = 0; i < ts.length; i++) {
+            String tile = ts[i];
+            if (!tile.equals("")) {
+                tiles[j] = Tile.renameTile(tile);
+                j++;
+            }
+        }
+        return tiles;
     }
 
     /**
@@ -501,7 +483,7 @@ public class Mahjong {
             System.out.println("This is not a winning hand");
         }
         for (Hand hand: waysToSplit){
-            System.out.println(hand);
+            System.out.println(Arrays.toString(hand.getMelds()));
         }
     }
 
@@ -597,17 +579,15 @@ public class Mahjong {
 
 
     public static void main(String[] args){
-        String[] hand = {m9, m9, p1, p2, p3, s2, s3, z2, z2, z2};
-        String winningTile = s1;
-        String[][] openMelds = {
-                {m2, m3, m1},
-        };
-        boolean[] meldsFromSelf = {false};
-        String[] doraIndicators = {s4};
-        String[] hiddenDoraIndicators = {};
+        String[] hand = {"z1_b1","z1_b2","z1_b3","z2_b1","z2_b2","z2_b3","z5_b2","","","","","",""};
+        String winningTile = "z5_b1";
+        String[][] openMelds = {{"z3_b1", "z3_b2", "z3_b3", "z3_b4"}, {"z4_b4", "z4_b1", "z4_b2", "z4_b4"}, {"", "", "", ""}, {"", "", "", ""}};
+        boolean[] meldsFromSelf = {true, true};
+        String[] doraIndicators = {"", "", "", "", ""};
+        String[] hiddenDoraIndicators = {"", "", "", "", ""};
         Mahjong m = new Mahjong(hand, winningTile, openMelds, meldsFromSelf, doraIndicators, hiddenDoraIndicators);
         m.setPrevailingWind(new Tile(z1));
-        m.setSeatWind(new Tile(z2));
+        m.setSeatWind(new Tile(z1));
         m.setSelfDrawn(false);
         m.setRiichi(0);
         m.tryToSplit();

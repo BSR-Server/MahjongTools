@@ -158,6 +158,7 @@ public class Hand {
         checkWinningTilePos();
         if(type == MELD_HAND){
             Arrays.sort(melds);
+            System.out.println(Arrays.toString(melds));
         }
         System.out.println(Arrays.toString(melds));
         checkYakuman();
